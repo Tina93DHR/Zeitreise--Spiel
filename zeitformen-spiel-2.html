@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="format-detection" content="telephone=no">
+<title>ZeitReise – Deutschspiel Zeitformen</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --praesens: #FF6B6B;
+    --praeteritum: #FFA552;
+    --perfekt: #FFD166;
+    --plusquam: #06D6A0;
+    --futur: #118AB2;
+    --bg: #0D0D2B;
+    --card: #1A1A3E;
+    --card2: #222250;
+    --text: #F0F0FF;
+    --star: #FFE66D;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html { height: -webkit-fill-available; }
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    overflow-x: hidden;
+    position: relative;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* ===== STARFIELD ===== */
+  #stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+  .star {
+    position: absolute; width: 3px; height: 3px;
+    background: white; border-radius: 50%;
+    animation: twinkle var(--d, 3s) infinite var(--delay, 0s);
+  }
+  @keyframes twinkle {
+    0%,100%{opacity:0.2;transform:scale(1);}
+    50%{opacity:1;transform:scale(1.4);}
+  }
+
+  /* ===== SCREENS ===== */
+  .screen { display: none; position: relative; z-index: 1; min-height: 100vh; padding: 20px; -webkit-overflow-scrolling: touch; }
+  .screen.active { display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; -webkit-align-items: center; align-items: center; }
+
+  /* ===== INTRO ===== */
+  #screen-intro { justify-content: center; text-align: center; gap: 24px; }
+  .logo-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(3rem, 10vw, 6rem);
+    background: linear-gradient(135deg, #FF6B6B, #FFA552, #FFD166, #06D6A0, #118AB2);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    animation: pulse 2s infinite;
+    filter: drop-shadow(0 0 20px rgba(255,107,107,0.5));
+    line-height: 1.1;
+  }
+  .logo-sub {
+    font-size: 1.2rem; color: #AAA8FF; letter-spacing: 3px; text-transform: uppercase;
+    font-weight: 700;
+  }
+  @keyframes pulse { 0%,100%{filter:drop-shadow(0 0 20px rgba(255,107,107,0.5))} 50%{filter:drop-shadow(0 0 35px rgba(6,214,160,0.7))} }
+
+  .name-box {
+    background: var(--card); border-radius: var(--radius);
+    padding: 32px 40px; max-width: 450px; width: 100%;
+    border: 2px solid rgba(255,255,255,0.1);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    animation: slideUp 0.6s ease;
+  }
+  @keyframes slideUp { from{opacity:0;transform:translateY(40px)} to{opacity:1;transform:translateY(0)} }
+  .name-box label { font-weight: 800; font-size: 1.1rem; display: block; margin-bottom: 12px; color: #AAA8FF; }
+  .name-input {
+    width: 100%; padding: 14px 18px;
+    background: var(--bg); border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 10px; color: white; font-size: 16px;
+    font-family: 'Nunito', sans-serif; font-weight: 700;
+    outline: none; transition: border-color 0.3s;
+    -webkit-appearance: none; appearance: none;
+    -webkit-text-fill-color: white;
+  }
+  .name-input:focus { border-color: #06D6A0; }
+
+  .btn-start {
+    margin-top: 20px; width: 100%;
+    padding: 16px; font-family: 'Fredoka One', cursive;
+    font-size: 1.5rem; letter-spacing: 1px;
+    background: linear-gradient(135deg, #FF6B6B, #FFA552);
+    border: none; border-radius: 12px; color: white;
+    cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 8px 25px rgba(255,107,107,0.4);
+    -webkit-appearance: none; appearance: none;
+    touch-action: manipulation; user-select: none; -webkit-user-select: none;
+  }
+  .btn-start:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(255,107,107,0.6); }
+  .btn-start:active { transform: translateY(0); }
+
+  .zeitformen-badges {
+    display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+  }
+  .badge {
+    padding: 8px 16px; border-radius: 30px; font-weight: 800; font-size: 0.85rem;
+    letter-spacing: 0.5px;
+  }
+
+  /* ===== MENU ===== */
+  #screen-menu { justify-content: flex-start; align-items: center; padding-top: 40px; gap: 30px; }
+  .menu-header { text-align: center; }
+  .greeting {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2.2rem; color: #FFD166;
+  }
+  .xp-bar-wrap { width: 100%; max-width: 500px; }
+  .xp-info { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 6px; }
+  .xp-bar { background: rgba(255,255,255,0.1); border-radius: 30px; height: 16px; overflow: hidden; }
+  .xp-fill { height: 100%; border-radius: 30px; background: linear-gradient(90deg, #06D6A0, #118AB2); transition: width 0.8s ease; }
+
+  .stats-row { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+  .stat-card {
+    background: var(--card); border-radius: var(--radius); padding: 16px 24px;
+    text-align: center; min-width: 100px;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .stat-num { font-family: 'Fredoka One', cursive; font-size: 2rem; }
+  .stat-lbl { font-size: 0.75rem; color: #AAA8FF; text-transform: uppercase; letter-spacing: 1px; }
+
+  .games-grid { display: -webkit-flex; display: grid; -webkit-flex-wrap: wrap; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; max-width: 900px; width: 100%; }
+  .game-card {
+    background: var(--card); border-radius: var(--radius); padding: 28px 22px;
+    cursor: pointer; transition: transform 0.25s, box-shadow 0.25s;
+    border: 2px solid transparent; text-align: center;
+    position: relative; overflow: hidden;
+    touch-action: manipulation; user-select: none; -webkit-user-select: none;
+  }
+  .game-card:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+  .game-card:hover { border-color: rgba(255,255,255,0.2); }
+  .game-card .icon { font-size: 3.5rem; margin-bottom: 12px; display: block; }
+  .game-card .title { font-family: 'Fredoka One', cursive; font-size: 1.4rem; margin-bottom: 6px; }
+  .game-card .desc { font-size: 0.85rem; color: #AAA8FF; line-height: 1.5; }
+  .game-card .diff { font-size: 0.75rem; margin-top: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+  .game-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: var(--glow, transparent); opacity: 0.07;
+    transition: opacity 0.3s;
+  }
+  .game-card:hover::before { opacity: 0.15; }
+
+  .leaderboard-btn {
+    padding: 12px 28px; border-radius: 30px;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+    color: white; font-family: 'Fredoka One', cursive; font-size: 1.1rem;
+    cursor: pointer; transition: all 0.2s;
+    touch-action: manipulation; user-select: none; -webkit-user-select: none;
+    -webkit-appearance: none; appearance: none;
+  }
+  .leaderboard-btn:hover { background: rgba(255,255,255,0.15); }
+
+  /* ===== GAME HEADER ===== */
+  .game-header {
+    width: 100%; max-width: 800px; display: flex;
+    justify-content: space-between; align-items: center;
+    margin-bottom: 20px; gap: 12px; flex-wrap: wrap;
+  }
+  .game-title-h { font-family: 'Fredoka One', cursive; font-size: 1.8rem; }
+  .timer-box {
+    background: var(--card2); border-radius: 10px; padding: 8px 20px;
+    font-family: 'Fredoka One', cursive; font-size: 1.5rem;
+    min-width: 80px; text-align: center;
+    border: 2px solid rgba(255,255,255,0.1);
+  }
+  .timer-box.danger { color: var(--praesens); animation: shake 0.3s infinite; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+  .score-box {
+    background: var(--card2); border-radius: 10px; padding: 8px 20px;
+    font-weight: 800; font-size: 1.2rem;
+    border: 2px solid rgba(255,255,255,0.1);
+  }
+  .back-btn {
+    background: rgba(255,255,255,0.08); border: none; color: white;
+    padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 1rem;
+    font-family: 'Nunito', sans-serif; font-weight: 700;
+    transition: background 0.2s;
+    touch-action: manipulation; user-select: none; -webkit-user-select: none;
+    -webkit-appearance: none; appearance: none; min-height: 44px;
+  }
+  .back-btn:hover { background: rgba(255,255,255,0.18); }
+
+  /* ===== PROGRESS BAR ===== */
+  .progress-bar-wrap { width: 100%; max-width: 800px; height: 8px; background: rgba(255,255,255,0.1); border-radius: 30px; margin-bottom: 16px; }
+  .progress-fill { height: 100%; border-radius: 30px; background: linear-gradient(90deg, #FFD166, #FF6B6B); transition: width 0.4s; }
+
+  /* ===== GAME 1: LÜCKENTEXT ===== */
+  #screen-game1 { align-items: center; gap: 16px; padding-top: 30px; }
+  .sentence-box {
+    background: var(--card); border-radius: var(--radius); padding: 30px;
+    max-width: 700px; width: 100%; font-size: 1.2rem; line-height: 2;
+    border: 2px solid rgba(255,255,255,0.08);
+  }
+  .blank {
+    display: inline-block;
+    border-bottom: 3px solid #06D6A0; min-width: 120px;
+    padding: 2px 8px; margin: 0 4px;
+    background: rgba(6,214,160,0.1); border-radius: 4px;
+    color: #06D6A0; font-weight: 800;
+  }
+  .blank.empty { color: transparent; }
+  .answer-input {
+    width: 100%; max-width: 700px;
+    padding: 16px 20px; background: var(--card2);
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 12px; color: white; font-size: 1.2rem;
+    font-family: 'Nunito', sans-serif; font-weight: 700; outline: none;
+    transition: border-color 0.3s;
+  }
+  .answer-input:focus { border-color: #06D6A0; }
+
+  .options-grid { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; max-width: 700px; }
+  .opt-btn {
+    padding: 14px 22px; border-radius: 30px;
+    background: var(--card2); border: 2px solid rgba(255,255,255,0.15);
+    color: white; font-size: 1rem; font-weight: 700; cursor: pointer;
+    transition: all 0.2s; font-family: 'Nunito', sans-serif;
+    touch-action: manipulation; user-select: none; -webkit-user-select: none;
+    -webkit-appearance: none; appearance: none; min-height: 48px;
+  }
+  .opt-btn:hover { border-color: #06D6A0; background: rgba(6,214,160,0.15); transform: translateY(-2px); }
+  .opt-btn.correct { background: rgba(6,214,160,0.3); border-color: #06D6A0; }
+  .opt-btn.wrong { background: rgba(255,107,107,0.3); border-color: #FF6B6B; animation: shake 0.3s; }
+
+  .hint-box {
+    background: rgba(255,209,102,0.12); border: 1px solid rgba(255,209,102,0.3);
+    border-radius: 10px; padding: 12px 20px; max-width: 700px; width: 100%;
+    font-size: 0.95rem; color: #FFD166;
+  }
+
+  /* ===== GAME 2: SORTIER-SPIEL ===== */
+  #screen-game2 { align-items: center; gap: 16px; padding-top: 30px; }
+  .sort-task {
+    background: var(--card); border-radius: var(--radius); padding: 24px;
+    max-width: 700px; width: 100%; font-size: 1.1rem;
+    border: 2px solid rgba(255,255,255,0.08); text-align: center;
+  }
+  .sort-task .verb { font-family: 'Fredoka One', cursive; font-size: 2rem; color: #FFD166; }
+  .sort-task .context { font-size: 0.9rem; color: #AAA8FF; margin-top: 8px; }
+  .zones-wrap { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; max-width: 800px; width: 100%; }
+  .zeit-zone {
+    flex: 1; min-width: 130px;
+    background: var(--card2); border-radius: var(--radius); padding: 14px;
+    border: 2px dashed rgba(255,255,255,0.15); text-align: center;
+    transition: border-color 0.3s, background 0.3s; cursor: pointer;
+    min-height: 100px; touch-action: manipulation;
+    user-select: none; -webkit-user-select: none;
+  }
+  .zeit-zone:active { border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.05); }
+  .zeit-zone.dragover { background: rgba(255,255,255,0.1); border-color: #06D6A0; }
+  .zeit-zone .zone-label { font-family: 'Fredoka One', cursive; font-size: 0.9rem; margin-bottom: 8px; }
+  .draggable-form {
+    display: inline-block; padding: 8px 16px; border-radius: 8px;
+    font-weight: 800; cursor: grab; user-select: none;
+    margin: 4px; font-size: 0.95rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .draggable-form:hover { transform: scale(1.08); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+  .draggable-form:active { cursor: grabbing; }
+
+  /* ===== GAME 3: QUIZ-BLITZ ===== */
+  #screen-game3 { align-items: center; gap: 16px; padding-top: 30px; }
+  .question-card {
+    background: var(--card); border-radius: var(--radius); padding: 32px;
+    max-width: 700px; width: 100%; text-align: center;
+    border: 2px solid rgba(255,255,255,0.08);
+    animation: fadeIn 0.4s ease;
+  }
+  @keyframes fadeIn { from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:scale(1)} }
+  .question-text { font-size: 1.3rem; font-weight: 700; line-height: 1.6; margin-bottom: 8px; }
+  .question-sub { font-size: 0.9rem; color: #AAA8FF; margin-bottom: 24px; }
+  .answers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .ans-btn {
+    padding: 16px; border-radius: 12px;
+    background: var(--card2); border: 2px solid rgba(255,255,255,0.12);
+    color: white; font-size: 1rem; font-weight: 700; cursor: pointer;
+    transition: all 0.2s; font-family: 'Nunito', sans-serif;
+    text-align: left; touch-action: manipulation;
+    user-select: none; -webkit-user-select: none;
+    -webkit-appearance: none; appearance: none; min-height: 56px;
+  }
+  .ans-btn:hover:not(:disabled) { border-color: #118AB2; background: rgba(17,138,178,0.2); transform: translateY(-2px); }
+  .ans-btn.correct { background: rgba(6,214,160,0.3); border-color: #06D6A0 !important; }
+  .ans-btn.wrong { background: rgba(255,107,107,0.3); border-color: #FF6B6B !important; }
+  .ans-btn:disabled { cursor: not-allowed; opacity: 0.7; }
+  .streak-display { font-family: 'Fredoka One', cursive; font-size: 1.4rem; color: #FFD166; }
+
+  /* ===== GAME 4: ZEITREISE ===== */
+  #screen-game4 { align-items: center; gap: 16px; padding-top: 30px; }
+  .story-box {
+    background: var(--card); border-radius: var(--radius); padding: 28px;
+    max-width: 700px; width: 100%; line-height: 2;
+    border: 2px solid rgba(255,255,255,0.08); font-size: 1.05rem;
+  }
+  .story-blank {
+    display: inline-block; min-width: 160px;
+    background: var(--card2); border: 2px solid rgba(255,255,255,0.2);
+    border-radius: 8px; padding: 4px 10px; margin: 0 4px;
+    cursor: pointer; transition: border-color 0.3s; font-weight: 800;
+    color: #FFD166; touch-action: manipulation;
+    user-select: none; -webkit-user-select: none;
+  }
+  .story-blank:hover { border-color: #FFD166; }
+  .story-blank.filled { color: #06D6A0; border-color: rgba(6,214,160,0.5); }
+  .story-blank.wrong-ans { color: var(--praesens); border-color: var(--praesens); animation: shake 0.3s; }
+  .word-bank { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; max-width: 700px; width: 100%; }
+  .word-chip {
+    padding: 10px 18px; border-radius: 30px; background: var(--card2);
+    border: 2px solid rgba(255,255,255,0.15); font-weight: 700; cursor: pointer;
+    transition: all 0.2s; font-size: 0.95rem;
+    touch-action: manipulation; user-select: none; -webkit-user-select: none;
+    min-height: 44px; display: -webkit-flex; display: flex;
+    -webkit-align-items: center; align-items: center;
+  }
+  .word-chip:hover:not(.used) { border-color: #FFD166; color: #FFD166; transform: translateY(-2px); }
+  .word-chip.used { opacity: 0.3; pointer-events: none; }
+  .word-chip.selected { border-color: #FFD166; color: #FFD166; background: rgba(255,209,102,0.15); }
+
+  /* ===== GAME 5: SPEED CHALLENGE ===== */
+  #screen-game5 { align-items: center; gap: 16px; padding-top: 30px; }
+  .speed-task {
+    background: var(--card); border-radius: var(--radius); padding: 32px;
+    max-width: 700px; width: 100%; text-align: center;
+    border: 2px solid rgba(255,255,255,0.08);
+  }
+  .speed-prompt { font-size: 0.9rem; color: #AAA8FF; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
+  .speed-sentence { font-size: 1.4rem; font-weight: 700; margin-bottom: 8px; }
+  .speed-instruction { font-size: 1rem; color: #FFD166; margin-bottom: 24px; }
+  .speed-answer-input {
+    width: 100%; padding: 18px; background: var(--card2);
+    border: 3px solid rgba(255,255,255,0.15); border-radius: 12px;
+    color: white; font-size: 16px; font-family: 'Nunito', sans-serif;
+    font-weight: 800; outline: none; text-align: center;
+    transition: border-color 0.3s;
+    -webkit-appearance: none; appearance: none;
+    -webkit-text-fill-color: white;
+  }
+  .speed-answer-input:focus { border-color: #FFD166; }
+  .speed-answer-input.correct-flash { border-color: #06D6A0; background: rgba(6,214,160,0.15); }
+  .speed-answer-input.wrong-flash { border-color: #FF6B6B; background: rgba(255,107,107,0.15); }
+  .lives-row { display: flex; gap: 6px; justify-content: center; }
+  .life { font-size: 1.5rem; transition: transform 0.3s; }
+  .life.lost { opacity: 0.2; transform: scale(0.7); }
+
+  /* ===== FEEDBACK OVERLAY ===== */
+  .feedback-pop {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
+    background: var(--card); border-radius: 20px; padding: 32px 48px;
+    text-align: center; z-index: 1000;
+    border: 2px solid rgba(255,255,255,0.2);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.7);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .feedback-pop.show { transform: translate(-50%, -50%) scale(1); }
+  .feedback-icon { font-size: 4rem; display: block; margin-bottom: 12px; }
+  .feedback-text { font-family: 'Fredoka One', cursive; font-size: 2rem; }
+  .feedback-sub { color: #AAA8FF; margin-top: 8px; }
+  .xp-gained { font-size: 1.4rem; color: #FFD166; font-weight: 800; margin-top: 12px; }
+
+  /* ===== RESULT SCREEN ===== */
+  #screen-result { justify-content: center; text-align: center; gap: 20px; }
+  .result-title { font-family: 'Fredoka One', cursive; font-size: 3rem; }
+  .result-score-big { font-family: 'Fredoka One', cursive; font-size: 5rem; color: #FFD166; line-height: 1; }
+  .result-stats { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+  .result-stat { background: var(--card); border-radius: var(--radius); padding: 20px 30px; text-align: center; }
+  .result-stat .rn { font-family: 'Fredoka One', cursive; font-size: 2.5rem; }
+  .result-stat .rl { font-size: 0.8rem; color: #AAA8FF; text-transform: uppercase; letter-spacing: 1px; }
+  .medals { font-size: 3rem; letter-spacing: 10px; margin: 10px 0; }
+  .btn-again, .btn-menu {
+    padding: 16px 32px; border-radius: 30px; font-family: 'Fredoka One', cursive;
+    font-size: 1.3rem; cursor: pointer; border: none; transition: all 0.2s;
+    touch-action: manipulation; user-select: none; -webkit-user-select: none;
+    -webkit-appearance: none; appearance: none; min-height: 56px;
+  }
+  .btn-again { background: linear-gradient(135deg, #06D6A0, #118AB2); color: white; box-shadow: 0 8px 25px rgba(6,214,160,0.4); }
+  .btn-menu { background: rgba(255,255,255,0.1); color: white; }
+  .btn-again:hover { transform: translateY(-3px); box-shadow: 0 12px 35px rgba(6,214,160,0.6); }
+  .btn-menu:hover { background: rgba(255,255,255,0.2); }
+
+  /* ===== LEADERBOARD ===== */
+  #screen-leaderboard { align-items: center; gap: 20px; padding-top: 40px; }
+  .lb-title { font-family: 'Fredoka One', cursive; font-size: 2.5rem; color: #FFD166; }
+  .lb-table { width: 100%; max-width: 500px; }
+  .lb-row {
+    display: flex; align-items: center; gap: 16px;
+    background: var(--card); border-radius: 12px; padding: 14px 20px; margin-bottom: 10px;
+    border: 1px solid rgba(255,255,255,0.08);
+    animation: slideUp 0.4s ease both;
+  }
+  .lb-rank { font-family: 'Fredoka One', cursive; font-size: 1.6rem; min-width: 40px; text-align: center; }
+  .lb-name { flex: 1; font-weight: 800; font-size: 1.1rem; }
+  .lb-pts { font-family: 'Fredoka One', cursive; font-size: 1.4rem; color: #FFD166; }
+  .lb-game { font-size: 0.75rem; color: #AAA8FF; }
+
+  /* ===== COMBO DISPLAY ===== */
+  .combo-display {
+    font-family: 'Fredoka One', cursive; font-size: 1.2rem;
+    color: #FF6B6B; text-align: center;
+  }
+  .combo-display.hot { color: #FFD166; animation: pulse 0.5s infinite; }
+
+  /* ===== FLOATING XP ===== */
+  .float-xp {
+    position: fixed; font-family: 'Fredoka One', cursive; font-size: 1.8rem;
+    color: #FFD166; pointer-events: none; z-index: 9999;
+    animation: floatUp 1.2s ease forwards;
+  }
+  @keyframes floatUp {
+    0%{opacity:1;transform:translateY(0) scale(1)}
+    100%{opacity:0;transform:translateY(-80px) scale(0.7)}
+  }
+
+  /* ===== PARTICLES ===== */
+  .particle {
+    position: fixed; pointer-events: none; z-index: 9998;
+    animation: particleFly var(--d) ease forwards;
+  }
+  @keyframes particleFly {
+    0%{opacity:1;transform:translate(0,0) rotate(0)}
+    100%{opacity:0;transform:translate(var(--x),var(--y)) rotate(720deg)}
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media(max-width:600px) {
+    .answers-grid { grid-template-columns: 1fr; }
+    .zones-wrap { -webkit-flex-direction: column; flex-direction: column; }
+    .logo-title { font-size: 3rem; }
+  }
+  /* iPad portrait */
+  @media(min-width:601px) and (max-width:1024px) {
+    .games-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .answers-grid { grid-template-columns: 1fr 1fr; }
+    .zones-wrap { -webkit-flex-wrap: wrap; flex-wrap: wrap; }
+  }
+  /* Touch devices: disable hover transforms to prevent sticky states */
+  @media (hover: none) and (pointer: coarse) {
+    .game-card:hover { transform: none; box-shadow: none; }
+    .opt-btn:hover { transform: none; background: var(--card2); border-color: rgba(255,255,255,0.15); }
+    .ans-btn:hover:not(:disabled) { transform: none; border-color: rgba(255,255,255,0.12); background: var(--card2); }
+    .word-chip:hover:not(.used) { transform: none; }
+    .game-card:active { transform: scale(0.97); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+    .opt-btn:active:not(:disabled) { border-color: #06D6A0; background: rgba(6,214,160,0.15); transform: scale(0.97); }
+    .ans-btn:active:not(:disabled) { border-color: #118AB2; background: rgba(17,138,178,0.2); transform: scale(0.97); }
+    .word-chip:active:not(.used) { border-color: #FFD166; color: #FFD166; background: rgba(255,209,102,0.15); }
+    .btn-start:hover { transform: none; box-shadow: 0 8px 25px rgba(255,107,107,0.4); }
+    .btn-start:active { transform: scale(0.97); }
+    .btn-again:active { transform: scale(0.97); }
+  }
+</style>
+</head>
+<body>
+
+<!-- STARS -->
+<div id="stars"></div>
+
+<!-- CUSTOM CONFIRM MODAL (native confirm() unreliable on iOS) -->
+<div id="confirm-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:2000;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+  <div style="background:#1A1A3E;border-radius:20px;padding:32px;max-width:340px;width:90%;text-align:center;border:2px solid rgba(255,255,255,0.15);box-shadow:0 30px 80px rgba(0,0,0,0.7);">
+    <div style="font-size:2.5rem;margin-bottom:12px">🚪</div>
+    <div style="font-family:'Fredoka One',cursive;font-size:1.4rem;margin-bottom:8px">Spiel beenden?</div>
+    <div style="color:#AAA8FF;font-size:0.95rem;margin-bottom:24px">Dein Fortschritt geht verloren.</div>
+    <div style="display:flex;gap:12px;justify-content:center;">
+      <button id="confirm-yes" style="flex:1;padding:14px;border-radius:12px;background:#FF6B6B;border:none;color:white;font-family:'Fredoka One',cursive;font-size:1.1rem;cursor:pointer;touch-action:manipulation;">Ja, raus!</button>
+      <button id="confirm-no" style="flex:1;padding:14px;border-radius:12px;background:rgba(255,255,255,0.1);border:2px solid rgba(255,255,255,0.2);color:white;font-family:'Fredoka One',cursive;font-size:1.1rem;cursor:pointer;touch-action:manipulation;">Weiter spielen</button>
+    </div>
+  </div>
+</div>
+
+<!-- FEEDBACK POP -->
+<div class="feedback-pop" id="feedback-pop">
+  <span class="feedback-icon" id="fb-icon">✨</span>
+  <div class="feedback-text" id="fb-text">Super!</div>
+  <div class="feedback-sub" id="fb-sub">Das war richtig!</div>
+  <div class="xp-gained" id="fb-xp">+50 XP</div>
+</div>
+
+<!-- ===== SCREEN: INTRO ===== -->
+<div class="screen active" id="screen-intro">
+  <div class="logo-title">⏰ ZeitReise</div>
+  <div class="logo-sub">Deutschtraining · Zeitformen · Klasse 7</div>
+  <div class="zeitformen-badges">
+    <span class="badge" style="background:rgba(255,107,107,0.2);color:#FF6B6B">Präsens</span>
+    <span class="badge" style="background:rgba(255,165,82,0.2);color:#FFA552">Präteritum</span>
+    <span class="badge" style="background:rgba(255,209,102,0.2);color:#FFD166">Perfekt</span>
+    <span class="badge" style="background:rgba(6,214,160,0.2);color:#06D6A0">Plusquamperfekt</span>
+    <span class="badge" style="background:rgba(17,138,178,0.2);color:#118AB2">Futur I</span>
+  </div>
+  <div class="name-box">
+    <label>👤 Wie heißt du?</label>
+    <input class="name-input" id="player-name" type="text" placeholder="Dein Name hier..." maxlength="20" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" enterkeyhint="go">
+    <button class="btn-start" onclick="startGame()">🚀 Jetzt spielen!</button>
+  </div>
+</div>
+
+<!-- ===== SCREEN: MENU ===== -->
+<div class="screen" id="screen-menu">
+  <div class="menu-header">
+    <div class="greeting" id="greeting-text">Hey, Spieler! 🌟</div>
+    <div style="color:#AAA8FF;margin-top:4px;font-size:0.9rem">Wähle ein Spiel und starte durch!</div>
+  </div>
+
+  <div class="xp-bar-wrap">
+    <div class="xp-info">
+      <span>⭐ Level <span id="player-level">1</span></span>
+      <span><span id="player-xp">0</span> / <span id="xp-next">500</span> XP</span>
+    </div>
+    <div class="xp-bar"><div class="xp-fill" id="xp-fill-bar" style="width:0%"></div></div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-num" style="color:#FFD166" id="total-score-display">0</div>
+      <div class="stat-lbl">Punkte</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:#06D6A0" id="streak-display-menu">0</div>
+      <div class="stat-lbl">Beststreak 🔥</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:#118AB2" id="games-played">0</div>
+      <div class="stat-lbl">Spiele</div>
+    </div>
+  </div>
+
+  <div class="games-grid">
+    <div class="game-card" style="--glow:linear-gradient(135deg,#FF6B6B,#FFA552)" onclick="startMode('game1')">
+      <span class="icon">✏️</span>
+      <div class="title">Lückentext-Profi</div>
+      <div class="desc">Setze das Verb in die richtige Zeitform ein. Kniffliger Kontext!</div>
+      <div class="diff" style="color:#FFA552">★★★ Mittel</div>
+    </div>
+    <div class="game-card" style="--glow:linear-gradient(135deg,#FFD166,#06D6A0)" onclick="startMode('game2')">
+      <span class="icon">🗂️</span>
+      <div class="title">Zeitform-Sortierer</div>
+      <div class="desc">Ordne die Verbformen den richtigen Zeitformen zu. Klick auf die Zone!</div>
+      <div class="diff" style="color:#06D6A0">★★★ Mittel</div>
+    </div>
+    <div class="game-card" style="--glow:linear-gradient(135deg,#118AB2,#06D6A0)" onclick="startMode('game3')">
+      <span class="icon">⚡</span>
+      <div class="title">Quiz-Blitz</div>
+      <div class="desc">Beantworte Fragen in Echtzeit gegen die Uhr. Dein Streak zählt!</div>
+      <div class="diff" style="color:#FF6B6B">★★★★ Schwer</div>
+    </div>
+    <div class="game-card" style="--glow:linear-gradient(135deg,#FFD166,#FF6B6B)" onclick="startMode('game4')">
+      <span class="icon">📖</span>
+      <div class="title">Geschichte vervollständigen</div>
+      <div class="desc">Lies einen Text und fülle alle Lücken aus – Zeitformen im Kontext!</div>
+      <div class="diff" style="color:#FFD166">★★★★ Schwer</div>
+    </div>
+    <div class="game-card" style="--glow:linear-gradient(135deg,#FF6B6B,#118AB2)" onclick="startMode('game5')">
+      <span class="icon">🏎️</span>
+      <div class="title">Speed-Challenge</div>
+      <div class="desc">Schreibe so schnell wie möglich! Jede Sekunde zählt für Bonus-Punkte!</div>
+      <div class="diff" style="color:#FF6B6B">★★★★★ Experte</div>
+    </div>
+  </div>
+
+  <button class="leaderboard-btn" onclick="showScreen('leaderboard')">🏆 Bestenliste</button>
+</div>
+
+<!-- ===== SCREEN: GAME 1 – LÜCKENTEXT ===== -->
+<div class="screen" id="screen-game1">
+  <div class="game-header">
+    <button class="back-btn" onclick="confirmBack()">← Zurück</button>
+    <div class="game-title-h">✏️ Lückentext-Profi</div>
+    <div class="timer-box" id="g1-timer">60</div>
+    <div class="score-box">⭐ <span id="g1-score">0</span></div>
+  </div>
+  <div class="progress-bar-wrap"><div class="progress-fill" id="g1-progress" style="width:0%"></div></div>
+  <div class="hint-box" id="g1-hint">💡 Tipp: Wähle die richtige Verbform!</div>
+  <div class="sentence-box" id="g1-sentence">Lade...</div>
+  <div class="options-grid" id="g1-options"></div>
+  <div class="combo-display" id="g1-combo"></div>
+</div>
+
+<!-- ===== SCREEN: GAME 2 – SORTIERER ===== -->
+<div class="screen" id="screen-game2">
+  <div class="game-header">
+    <button class="back-btn" onclick="confirmBack()">← Zurück</button>
+    <div class="game-title-h">🗂️ Zeitform-Sortierer</div>
+    <div class="timer-box" id="g2-timer">90</div>
+    <div class="score-box">⭐ <span id="g2-score">0</span></div>
+  </div>
+  <div class="progress-bar-wrap"><div class="progress-fill" id="g2-progress" style="width:0%"></div></div>
+  <div class="sort-task" id="g2-task">
+    <div style="color:#AAA8FF;font-size:0.9rem">Welche Zeitform gehört dazu?</div>
+    <div class="verb" id="g2-verb">—</div>
+    <div class="context" id="g2-context"></div>
+  </div>
+  <div class="zones-wrap" id="g2-zones"></div>
+  <div style="color:#AAA8FF;font-size:0.9rem;margin-top:4px">Klicke auf die richtige Zeitform!</div>
+</div>
+
+<!-- ===== SCREEN: GAME 3 – QUIZ BLITZ ===== -->
+<div class="screen" id="screen-game3">
+  <div class="game-header">
+    <button class="back-btn" onclick="confirmBack()">← Zurück</button>
+    <div class="game-title-h">⚡ Quiz-Blitz</div>
+    <div class="timer-box" id="g3-timer">20</div>
+    <div class="score-box">⭐ <span id="g3-score">0</span></div>
+  </div>
+  <div class="progress-bar-wrap"><div class="progress-fill" id="g3-progress" style="width:0%"></div></div>
+  <div class="streak-display" id="g3-streak"></div>
+  <div class="question-card" id="g3-card">
+    <div class="question-text" id="g3-question">Lade...</div>
+    <div class="question-sub" id="g3-sub"></div>
+    <div class="answers-grid" id="g3-answers"></div>
+  </div>
+</div>
+
+<!-- ===== SCREEN: GAME 4 – GESCHICHTE ===== -->
+<div class="screen" id="screen-game4">
+  <div class="game-header">
+    <button class="back-btn" onclick="confirmBack()">← Zurück</button>
+    <div class="game-title-h">📖 Geschichte vervollständigen</div>
+    <div class="timer-box" id="g4-timer">120</div>
+    <div class="score-box">⭐ <span id="g4-score">0</span></div>
+  </div>
+  <div class="progress-bar-wrap"><div class="progress-fill" id="g4-progress" style="width:0%"></div></div>
+  <div class="story-box" id="g4-story"></div>
+  <div style="color:#AAA8FF;font-size:0.9rem">Wähle ein Wort aus der Wortliste und klicke dann auf die Lücke.</div>
+  <div class="word-bank" id="g4-wordbank"></div>
+  <button class="btn-start" style="max-width:300px;font-size:1rem;padding:12px" id="g4-check-btn" onclick="checkStory()">✅ Überprüfen</button>
+</div>
+
+<!-- ===== SCREEN: GAME 5 – SPEED ===== -->
+<div class="screen" id="screen-game5">
+  <div class="game-header">
+    <button class="back-btn" onclick="confirmBack()">← Zurück</button>
+    <div class="game-title-h">🏎️ Speed-Challenge</div>
+    <div class="timer-box" id="g5-timer">90</div>
+    <div class="score-box">⭐ <span id="g5-score">0</span></div>
+  </div>
+  <div class="progress-bar-wrap"><div class="progress-fill" id="g5-progress" style="width:0%"></div></div>
+  <div class="lives-row" id="g5-lives"></div>
+  <div class="speed-task">
+    <div class="speed-prompt" id="g5-prompt">Bilde den Satz um in:</div>
+    <div class="speed-sentence" id="g5-sentence">—</div>
+    <div class="speed-instruction" id="g5-instruction"></div>
+    <input class="speed-answer-input" id="g5-input" type="text" placeholder="Deine Antwort..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">
+    <button id="g5-submit-btn" style="margin-top:14px;width:100%;padding:14px;border-radius:12px;background:linear-gradient(135deg,#FFD166,#FFA552);border:none;color:#0D0D2B;font-family:'Fredoka One',cursive;font-size:1.2rem;cursor:pointer;touch-action:manipulation;-webkit-appearance:none;appearance:none;font-weight:900;">✅ Bestätigen</button>
+  </div>
+  <div style="color:#AAA8FF;font-size:0.9rem;text-align:center">Drücke Enter zum Bestätigen · Groß-/Kleinschreibung egal</div>
+  <div class="combo-display" id="g5-combo"></div>
+</div>
+
+<!-- ===== SCREEN: RESULT ===== -->
+<div class="screen" id="screen-result">
+  <div class="result-title" id="result-title">🎉 Spiel beendet!</div>
+  <div class="medals" id="result-medals">🥇</div>
+  <div class="result-score-big" id="result-score">0</div>
+  <div style="color:#AAA8FF">Punkte erzielt</div>
+  <div class="result-stats">
+    <div class="result-stat">
+      <div class="rn" style="color:#06D6A0" id="res-correct">0</div>
+      <div class="rl">Richtig ✓</div>
+    </div>
+    <div class="result-stat">
+      <div class="rn" style="color:#FF6B6B" id="res-wrong">0</div>
+      <div class="rl">Falsch ✗</div>
+    </div>
+    <div class="result-stat">
+      <div class="rn" style="color:#FFD166" id="res-streak">0</div>
+      <div class="rl">Beststreak 🔥</div>
+    </div>
+    <div class="result-stat">
+      <div class="rn" style="color:#AAA8FF" id="res-xp">+0</div>
+      <div class="rl">XP gewonnen</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center">
+    <button class="btn-again" onclick="playAgain()">🔄 Nochmal spielen</button>
+    <button class="btn-menu" onclick="showScreen('menu')">🏠 Menü</button>
+  </div>
+</div>
+
+<!-- ===== SCREEN: LEADERBOARD ===== -->
+<div class="screen" id="screen-leaderboard">
+  <div class="lb-title">🏆 Bestenliste</div>
+  <div class="lb-table" id="lb-table"></div>
+  <button class="btn-menu" onclick="showScreen('menu')">← Zurück</button>
+</div>
+
+<script>
+// ============================================================
+// DATA & QUESTIONS
+// ============================================================
+const ZEITFORMEN = ['Präsens','Präteritum','Präteritum','Perfekt','Plusquamperfekt','Futur I'];
+const FARBEN = {
+  'Präsens': '#FF6B6B',
+  'Präteritum': '#FFA552',
+  'Perfekt': '#FFD166',
+  'Plusquamperfekt': '#06D6A0',
+  'Futur I': '#118AB2'
+};
+
+// GAME 1: Lückentext-Fragen
+const G1_QUESTIONS = [
+  { sentence: 'Gestern ___ ich das Buch in der Bibliothek ___.', blanks: ['hatte','gelesen'], answer: 'hatte...gelesen', zeitform: 'Plusquamperfekt', options: ['hatte...gelesen','habe...gelesen','hatte...lesen','hatte...gelest'], hint: '💡 Plusquamperfekt: hatte/hatten + Partizip II (vor einem anderen Vergangenheitsereignis)' },
+  { sentence: 'Morgen ___ wir das Schulprojekt ___.', blanks: ['werden','präsentieren'], answer: 'werden...präsentieren', zeitform: 'Futur I', options: ['werden...präsentieren','werden...präsentiert','haben...präsentiert','wollen...präsentiert'], hint: '💡 Futur I: werden + Infinitiv' },
+  { sentence: 'Als sie ankam, ___ er schon seit einer Stunde ___.', blanks: ['hatte','gewartet'], answer: 'hatte...gewartet', zeitform: 'Plusquamperfekt', options: ['hatte...gewartet','hat...gewartet','hatte...warten','war...gewartet'], hint: '💡 Plusquamperfekt: hatte/war + Partizip II' },
+  { sentence: 'Der Zeuge ___ die ganze Wahrheit ___.', blanks: ['hat','erzählt'], answer: 'hat...erzählt', zeitform: 'Perfekt', options: ['hat...erzählt','hatte...erzählt','erzählte','wird...erzählen'], hint: '💡 Perfekt: haben/sein + Partizip II – für Gespräche und Alltagssprache' },
+  { sentence: 'Im Mittelalter ___ die Menschen sehr kurze Leben.', blanks: ['führten'], answer: 'führten', zeitform: 'Präteritum', options: ['führten','führen','haben geführt','werden führen'], hint: '💡 Präteritum: einfache Vergangenheit, oft in Texten und Büchern' },
+  { sentence: 'Täglich ___ das Kind um 7 Uhr ___.', blanks: ['wacht','auf'], answer: 'wacht...auf', zeitform: 'Präsens', options: ['wacht...auf','wachte...auf','ist...aufgewacht','wird...aufwachen'], hint: '💡 Präsens: Dinge, die regelmäßig passieren oder gerade jetzt geschehen' },
+  { sentence: 'Die Wissenschaftlerin ___ das Experiment bereits ___, bevor der Sturm ausbrach.', blanks: ['hatte','abgeschlossen'], answer: 'hatte...abgeschlossen', zeitform: 'Plusquamperfekt', options: ['hatte...abgeschlossen','hat...abgeschlossen','hatte...abschließen','schloss...ab'], hint: '💡 Plusquamperfekt: Handlung, die noch FRÜHER war als eine andere Vergangenheit' },
+  { sentence: 'In zehn Jahren ___ Roboter viele Aufgaben ___.', blanks: ['werden','übernehmen'], answer: 'werden...übernehmen', zeitform: 'Futur I', options: ['werden...übernehmen','haben...übernommen','werden...übergenommen','übernahmen'], hint: '💡 Futur I = werden + Infinitiv (Vorhersagen, Absichten)' },
+  { sentence: 'Der Schüler ___ den Aufsatz in drei Stunden ___.', blanks: ['hat','geschrieben'], answer: 'hat...geschrieben', zeitform: 'Perfekt', options: ['hat...geschrieben','hatte...geschrieben','schrieb','wird...schreiben'], hint: '💡 Perfekt: abgeschlossene Handlung, die noch Bezug zur Gegenwart hat' },
+  { sentence: 'Die Erde ___ sich alle 24 Stunden um ihre eigene Achse.', blanks: ['dreht'], answer: 'dreht', zeitform: 'Präsens', options: ['dreht','drehte','hat gedreht','wird drehen'], hint: '💡 Präsens für allgemeine Wahrheiten und Naturgesetze' },
+];
+
+// GAME 2: Sortier-Fragen
+const G2_QUESTIONS = [
+  { verb: 'hatte gespielt', context: 'Er ___ vor der Schule schon ___.', answer: 'Plusquamperfekt' },
+  { verb: 'wird lernen', context: 'Sie ___ morgen fleißig ___.', answer: 'Futur I' },
+  { verb: 'lief', context: 'Er ___ gestern sehr schnell.', answer: 'Präteritum' },
+  { verb: 'hat gegessen', context: 'Das Kind ___ seinen Teller leer ___.', answer: 'Perfekt' },
+  { verb: 'schläft', context: 'Meine Katze ___ gerade auf dem Sofa.', answer: 'Präsens' },
+  { verb: 'werden fliegen', context: 'Nächstes Jahr ___ wir nach Australien ___.', answer: 'Futur I' },
+  { verb: 'hatten vergessen', context: 'Sie ___ die Hausaufgaben schon ___, als er fragte.', answer: 'Plusquamperfekt' },
+  { verb: 'las', context: 'Er ___ das Buch in einer Nacht.', answer: 'Präteritum' },
+  { verb: 'ist gereist', context: 'Sie ___ im Sommer nach Paris ___.', answer: 'Perfekt' },
+  { verb: 'erklärt', context: 'Die Lehrerin ___ gerade die Regel.', answer: 'Präsens' },
+  { verb: 'hatte gewonnen', context: 'Das Team ___ schon ___, bevor die Halbzeit pfiff.', answer: 'Plusquamperfekt' },
+  { verb: 'wird regnen', context: 'Laut Vorhersage ___ es morgen ___.', answer: 'Futur I' },
+];
+
+// GAME 3: Quiz-Blitz
+const G3_QUESTIONS = [
+  { q: 'Was ist das Partizip II von "schreiben"?', sub: 'Gesucht: Partizip II', answers: ['geschrieben','schrieben','geschreiben','schreibt'], correct: 0 },
+  { q: 'Wie lautet "fahren" im Perfekt (3. Person Singular)?', sub: 'Ich / Du / Er – was passt?', answers: ['hat gefahren','ist gefahren','war gefahren','hatte gefahren'], correct: 1 },
+  { q: '"Ich werde morgen pünktlich kommen." – Welche Zeitform?', sub: 'Erkenne die Zeitform!', answers: ['Futur I','Präsens','Präteritum','Perfekt'], correct: 0 },
+  { q: 'Welches Hilfsverb nutzt das Plusquamperfekt?', sub: 'Denk an die Bildungsregel!', answers: ['hatte/war','hat/ist','wird','kann'], correct: 0 },
+  { q: '"Sie aßen Pizza und tranken Limo." – Welche Zeitform?', sub: 'Erkenne die Zeitform!', answers: ['Präteritum','Präsens','Perfekt','Plusquamperfekt'], correct: 0 },
+  { q: 'Was ist das Partizip II von "gehen"?', sub: 'Starkes Verb – Achtung!', answers: ['gegangen','gegeht','gegangen haben','geht'], correct: 0 },
+  { q: '"Nachdem er gegessen hatte, ging er schlafen." – Was ist "gegessen hatte"?', sub: 'Zeitform bestimmen', answers: ['Plusquamperfekt','Perfekt','Präteritum','Futur I'], correct: 0 },
+  { q: 'Welcher Satz steht im Futur I?', sub: 'Nur einer ist richtig!', answers: ['Er wird schlafen.','Er schläft.','Er schlief.','Er hat geschlafen.'], correct: 0 },
+  { q: '"haben" oder "sein" – welches Hilfsverb braucht "laufen" im Perfekt?', sub: 'Bewegungsverb?', answers: ['sein','haben','beide möglich','keins von beiden'], correct: 0 },
+  { q: 'Bilde das Präteritum von "sehen" (3. Person Singular):', sub: 'er/sie/es ___', answers: ['sah','gesehen','gesieht','sehte'], correct: 0 },
+  { q: 'Welche Zeitform beschreibt Ereignisse, die VOR einem Vergangenheitsereignis lagen?', sub: 'Grammatik-Wissen', answers: ['Plusquamperfekt','Perfekt','Präteritum','Präsens'], correct: 0 },
+  { q: '"Das Mädchen tanzt." – Welche Zeitform?', sub: 'Einfach?', answers: ['Präsens','Präteritum','Futur I','Perfekt'], correct: 0 },
+  { q: 'Wie lautet das Perfekt von "kommen" (1. Person Singular)?', sub: 'Ich ___ ___.', answers: ['bin gekommen','habe gekommen','war gekommen','hatte gekommen'], correct: 0 },
+  { q: '"wir lachten" – das ist welche Zeitform?', sub: 'Endung -te verrät es!', answers: ['Präteritum','Perfekt','Präsens','Futur I'], correct: 0 },
+  { q: 'Welches Verb wird im Perfekt mit "sein" gebildet?', sub: 'Nur eines ist korrekt!', answers: ['fahren','essen','machen','lachen'], correct: 0 },
+];
+
+// GAME 4: Geschichte
+const G4_STORIES = [
+  {
+    title: "Die vergessene Hausaufgabe",
+    template: `Es war Montag, als Jakob aufwachte. Er [aufwachte|präteritum] sein Frühstück und [aß|präteritum] schnell aus dem Haus. In der Schule [rannte|präteritum] plötzlich, dass er seine Hausaufgaben [hatte vergessen|plusquamperfekt]. Seine Lehrerin Frau Koch [fragte|präteritum], ob er fertig sei. "Morgen [werde bringen|futur] ich sie bestimmt mit!", versprach er. Heute Abend [macht|präsens] er sie sofort.`,
+    blanks: [
+      {id:'b1', correct:'wachte auf', options:['wachte auf','aufgewacht','aufwachen wird','wacht auf'], hint:'Präteritum von aufwachen'},
+      {id:'b2', correct:'aß', options:['aß','hat gegessen','isst','wird essen'], hint:'Präteritum von essen'},
+      {id:'b3', correct:'merkte', options:['merkte','hat gemerkt','merkt','wird merken'], hint:'Präteritum von merken'},
+      {id:'b4', correct:'hatte vergessen', options:['hatte vergessen','vergaß','hat vergessen','vergessen hatte'], hint:'Plusquamperfekt: hatte + Partizip II'},
+      {id:'b5', correct:'fragte', options:['fragte','fragt','hat gefragt','wird fragen'], hint:'Präteritum von fragen'},
+      {id:'b6', correct:'werde bringen', options:['werde bringen','bringe','habe gebracht','brachte'], hint:'Futur I: werde + Infinitiv'},
+      {id:'b7', correct:'macht', options:['macht','machte','hat gemacht','wird machen'], hint:'Präsens für geplante aktuelle Handlung'},
+    ],
+    sentences: [
+      {text: 'Es war Montag, als Jakob ', blank: 'b1', after: '.'},
+      {text: ' Er ', blank: 'b2', after: ' schnell sein Frühstück und rannte aus dem Haus.'},
+      {text: ' In der Schule ', blank: 'b3', after: ' er plötzlich, dass er seine Hausaufgaben'},
+      {text: ' ', blank: 'b4', after: '.'},
+      {text: ' Seine Lehrerin ', blank: 'b5', after: ', ob er fertig sei.'},
+      {text: ' „Morgen ', blank: 'b6', after: ' ich sie bestimmt mit!", versprach er.'},
+      {text: ' Heute Abend ', blank: 'b7', after: ' er sie sofort.'},
+    ]
+  },
+  {
+    title: "Abenteuer im Wald",
+    sentences: [
+      {text: 'Lena und Tom ', blank: 'b1', after: ' in den dunklen Wald.'},
+      {text: ' Schon von weitem ', blank: 'b2', after: ' sie seltsame Geräusche.'},
+      {text: ' Tom ', blank: 'b3', after: ' seinen Mut zusammen, denn er hatte Angst.'},
+      {text: ' Lena aber ', blank: 'b4', after: ' schon viele Wälder erkundet.'},
+      {text: ' „Nächste Woche ', blank: 'b5', after: ' wir besser vorbereitet kommen!", rief sie.'},
+      {text: ' Heute ', blank: 'b6', after: ' der Mut, weiterzugehen, einfach nicht.'},
+    ],
+    blanks: [
+      {id:'b1', correct:'gingen', options:['gingen','gegangen','gehen','werden gehen'], hint:'Präteritum von gehen'},
+      {id:'b2', correct:'hörten', options:['hörten','haben gehört','hören','werden hören'], hint:'Präteritum von hören'},
+      {id:'b3', correct:'nahm', options:['nahm','hat genommen','nimmt','hatte genommen'], hint:'Präteritum von nehmen'},
+      {id:'b4', correct:'hatte erkundet', options:['hatte erkundet','erkundet hat','erkundet hatte','erkundete'], hint:'Plusquamperfekt: hatte + Partizip II'},
+      {id:'b5', correct:'werden', options:['werden','sind','waren','haben'], hint:'Futur I: werden + Infinitiv'},
+      {id:'b6', correct:'fehlte', options:['fehlte','hat gefehlt','fehlt','wird fehlen'], hint:'Präteritum von fehlen'},
+    ]
+  }
+];
+
+// GAME 5: Speed Challenge
+const G5_QUESTIONS = [
+  { prompt: '"gehe" → Präteritum', sentence: 'Ich gehe in die Schule.', instruction: 'Schreibe den Satz im Präteritum!', answer: 'Ich ging in die Schule.' },
+  { prompt: '"spielte" → Perfekt', sentence: 'Er spielte Fußball.', instruction: 'Forme das Präteritum ins Perfekt um!', answer: 'Er hat Fußball gespielt.' },
+  { prompt: '"liest" → Futur I', sentence: 'Sie liest ein Buch.', instruction: 'Forme den Satz in Futur I um!', answer: 'Sie wird ein Buch lesen.' },
+  { prompt: '"kamen" → Plusquamperfekt', sentence: 'Sie kamen zu spät.', instruction: 'Forme ins Plusquamperfekt um!', answer: 'Sie waren zu spät gekommen.' },
+  { prompt: '"wird schreiben" → Präsens', sentence: 'Er wird einen Brief schreiben.', instruction: 'Forme ins Präsens um!', answer: 'Er schreibt einen Brief.' },
+  { prompt: '"sah" → Perfekt', sentence: 'Ich sah einen Film.', instruction: 'Forme das Präteritum ins Perfekt um!', answer: 'Ich habe einen Film gesehen.' },
+  { prompt: '"hat gekauft" → Präteritum', sentence: 'Sie hat ein Kleid gekauft.', instruction: 'Forme das Perfekt ins Präteritum um!', answer: 'Sie kaufte ein Kleid.' },
+  { prompt: '"fahren" → Futur I (wir)', sentence: 'Wir fahren nach Berlin.', instruction: 'Forme ins Futur I um!', answer: 'Wir werden nach Berlin fahren.' },
+  { prompt: '"rannte" → hatte + Partizip II', sentence: 'Er rannte weg, nachdem der Hund bellte.', instruction: 'Das Weglaufen war früher – Plusquamperfekt!', answer: 'Er war weggerannt, nachdem der Hund gebellt hatte.' },
+  { prompt: '"machte" → Präsens', sentence: 'Sie machte ihre Hausaufgaben.', instruction: 'Forme ins Präsens um!', answer: 'Sie macht ihre Hausaufgaben.' },
+];
+
+// ============================================================
+// PLAYER STATE
+// ============================================================
+let player = {
+  name: 'Spieler',
+  xp: 0, level: 1, totalScore: 0,
+  bestStreak: 0, gamesPlayed: 0
+};
+let leaderboard = [];
+let currentGame = null;
+let gameState = {};
+
+// ============================================================
+// INIT
+// ============================================================
+function initStars() {
+  const c = document.getElementById('stars');
+  for(let i = 0; i < 80; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${2+Math.random()*4}s;--delay:${Math.random()*3}s;opacity:${0.2+Math.random()*0.8}`;
+    c.appendChild(s);
+  }
+}
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  if(name === 'menu') updateMenu();
+  if(name === 'leaderboard') renderLeaderboard();
+}
+
+function startGame() {
+  const n = document.getElementById('player-name').value.trim();
+  if(!n) { document.getElementById('player-name').focus(); return; }
+  player.name = n;
+  showScreen('menu');
+}
+
+function updateMenu() {
+  document.getElementById('greeting-text').textContent = `Hey, ${player.name}! 🌟`;
+  document.getElementById('player-xp').textContent = player.xp;
+  document.getElementById('player-level').textContent = player.level;
+  const xpNext = player.level * 500;
+  document.getElementById('xp-next').textContent = xpNext;
+  document.getElementById('xp-fill-bar').style.width = Math.min(100, (player.xp % xpNext) / xpNext * 100) + '%';
+  document.getElementById('total-score-display').textContent = player.totalScore;
+  document.getElementById('streak-display-menu').textContent = player.bestStreak;
+  document.getElementById('games-played').textContent = player.gamesPlayed;
+}
+
+function confirmBack() {
+  const modal = document.getElementById('confirm-modal');
+  modal.style.display = 'flex';
+  document.getElementById('confirm-yes').onclick = () => {
+    modal.style.display = 'none';
+    clearGameTimers();
+    showScreen('menu');
+  };
+  document.getElementById('confirm-no').onclick = () => {
+    modal.style.display = 'none';
+  };
+}
+
+function clearGameTimers() {
+  if(gameState.timer) { clearInterval(gameState.timer); gameState.timer = null; }
+}
+
+// ============================================================
+// GAMIFICATION
+// ============================================================
+function addXP(amount, x, y) {
+  player.xp += amount;
+  while(player.xp >= player.level * 500) { player.level++; showLevelUp(); }
+  if(x !== undefined) spawnFloatXP(`+${amount} XP`, x, y);
+}
+
+function spawnFloatXP(text, x, y) {
+  const el = document.createElement('div');
+  el.className = 'float-xp';
+  el.textContent = text;
+  el.style.left = (x || window.innerWidth/2) + 'px';
+  el.style.top = (y || window.innerHeight/2) + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1300);
+}
+
+function showLevelUp() {
+  showFeedback('🎖️', `LEVEL ${player.level}!`, 'Du hast ein neues Level erreicht!', '', 2000);
+  spawnParticles(window.innerWidth/2, window.innerHeight/2, 20);
+}
+
+function spawnParticles(x, y, n) {
+  const colors = ['#FF6B6B','#FFD166','#06D6A0','#118AB2','#FFA552'];
+  for(let i = 0; i < n; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const angle = (i / n) * 360;
+    const dist = 80 + Math.random() * 80;
+    const px = Math.cos(angle * Math.PI/180) * dist;
+    const py = Math.sin(angle * Math.PI/180) * dist;
+    p.style.cssText = `left:${x}px;top:${y}px;width:8px;height:8px;border-radius:50%;background:${colors[i%colors.length]};--x:${px}px;--y:${py}px;--d:${0.5+Math.random()*0.7}s`;
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 1200);
+  }
+}
+
+function showFeedback(icon, text, sub, xp, duration) {
+  const pop = document.getElementById('feedback-pop');
+  document.getElementById('fb-icon').textContent = icon;
+  document.getElementById('fb-text').textContent = text;
+  document.getElementById('fb-sub').textContent = sub;
+  document.getElementById('fb-xp').textContent = xp;
+  pop.classList.add('show');
+  if(pop._t) clearTimeout(pop._t);
+  pop._t = setTimeout(() => pop.classList.remove('show'), duration || 1500);
+}
+
+// ============================================================
+// GAME DISPATCH
+// ============================================================
+function startMode(mode) {
+  currentGame = mode;
+  clearGameTimers();
+  gameState = { score: 0, correct: 0, wrong: 0, streak: 0, bestStreak: 0, qIndex: 0, xpEarned: 0 };
+  if(mode === 'game1') startGame1();
+  else if(mode === 'game2') startGame2();
+  else if(mode === 'game3') startGame3();
+  else if(mode === 'game4') startGame4();
+  else if(mode === 'game5') startGame5();
+}
+
+function endGame() {
+  clearGameTimers();
+  player.gamesPlayed++;
+  player.totalScore += gameState.score;
+  if(gameState.bestStreak > player.bestStreak) player.bestStreak = gameState.bestStreak;
+  // Save to leaderboard
+  leaderboard.push({ name: player.name, score: gameState.score, game: currentGame, streak: gameState.bestStreak });
+  leaderboard.sort((a,b) => b.score - a.score);
+  if(leaderboard.length > 10) leaderboard.length = 10;
+  // Show result
+  const pct = gameState.correct / Math.max(1, gameState.correct + gameState.wrong);
+  let medal = pct >= 0.9 ? '🥇' : pct >= 0.7 ? '🥈' : '🥉';
+  document.getElementById('result-title').textContent = pct >= 0.8 ? '🎉 Hervorragend!' : pct >= 0.5 ? '👍 Gut gemacht!' : '💪 Weiter üben!';
+  document.getElementById('result-medals').textContent = medal;
+  document.getElementById('result-score').textContent = gameState.score;
+  document.getElementById('res-correct').textContent = gameState.correct;
+  document.getElementById('res-wrong').textContent = gameState.wrong;
+  document.getElementById('res-streak').textContent = gameState.bestStreak;
+  document.getElementById('res-xp').textContent = '+' + gameState.xpEarned;
+  showScreen('result');
+  if(pct >= 0.8) spawnParticles(window.innerWidth/2, 200, 30);
+}
+
+function playAgain() { startMode(currentGame); }
+
+// ============================================================
+// GAME 1: LÜCKENTEXT
+// ============================================================
+function startGame1() {
+  gameState.questions = shuffle([...G1_QUESTIONS]);
+  gameState.timeLeft = 60;
+  gameState.qIdx = 0;
+  showScreen('game1');
+  renderG1();
+  gameState.timer = setInterval(() => {
+    gameState.timeLeft--;
+    const t = document.getElementById('g1-timer');
+    t.textContent = gameState.timeLeft;
+    t.classList.toggle('danger', gameState.timeLeft <= 10);
+    if(gameState.timeLeft <= 0) endGame();
+  }, 1000);
+}
+
+function renderG1() {
+  if(gameState.qIdx >= gameState.questions.length) { endGame(); return; }
+  const q = gameState.questions[gameState.qIdx];
+  document.getElementById('g1-hint').innerHTML = q.hint;
+  // Build sentence with blank
+  const parts = q.sentence.split('___');
+  let html = parts[0] + '<span class="blank">___</span>';
+  if(parts.length > 2) html += parts[1] + '<span class="blank">___</span>';
+  if(parts.length > 2) html += parts[2];
+  else html += parts[1] || '';
+  document.getElementById('g1-sentence').innerHTML = html;
+  // Progress
+  document.getElementById('g1-progress').style.width = (gameState.qIdx / gameState.questions.length * 100) + '%';
+  // Options
+  const opts = shuffle([...q.options]);
+  const container = document.getElementById('g1-options');
+  container.innerHTML = '';
+  opts.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.textContent = opt;
+    btn.onclick = () => checkG1(opt, q.answer, btn);
+    container.appendChild(btn);
+  });
+  document.getElementById('g1-score').textContent = gameState.score;
+  updateCombo('g1-combo', gameState.streak);
+}
+
+function checkG1(chosen, correct, btn) {
+  const btns = document.querySelectorAll('.opt-btn');
+  btns.forEach(b => b.disabled = true);
+  if(chosen === correct) {
+    btn.classList.add('correct');
+    gameState.streak++;
+    gameState.correct++;
+    if(gameState.streak > gameState.bestStreak) gameState.bestStreak = gameState.streak;
+    const pts = 100 + gameState.streak * 20;
+    gameState.score += pts;
+    const xp = 50 + gameState.streak * 10;
+    gameState.xpEarned += xp;
+    addXP(xp, btn.getBoundingClientRect().left, btn.getBoundingClientRect().top);
+    showFeedback('✅', streakMsg(gameState.streak), `+${pts} Punkte!`, `+${xp} XP`);
+    if(gameState.streak % 5 === 0) spawnParticles(window.innerWidth/2, window.innerHeight/2, 15);
+    setTimeout(() => { gameState.qIdx++; renderG1(); }, 1200);
+  } else {
+    btn.classList.add('wrong');
+    gameState.streak = 0;
+    gameState.wrong++;
+    // Highlight correct
+    btns.forEach(b => { if(b.textContent === correct) b.classList.add('correct'); });
+    showFeedback('❌', 'Falsch!', `Richtig war: ${correct}`, '');
+    setTimeout(() => { gameState.qIdx++; renderG1(); }, 1800);
+  }
+  document.getElementById('g1-score').textContent = gameState.score;
+  updateCombo('g1-combo', gameState.streak);
+}
+
+// ============================================================
+// GAME 2: SORTIERER
+// ============================================================
+const ZEITFORMEN_LIST = ['Präsens','Präteritum','Perfekt','Plusquamperfekt','Futur I'];
+
+function startGame2() {
+  gameState.questions = shuffle([...G2_QUESTIONS]);
+  gameState.timeLeft = 90;
+  gameState.qIdx = 0;
+  showScreen('game2');
+  renderG2();
+  gameState.timer = setInterval(() => {
+    gameState.timeLeft--;
+    const t = document.getElementById('g2-timer');
+    t.textContent = gameState.timeLeft;
+    t.classList.toggle('danger', gameState.timeLeft <= 10);
+    if(gameState.timeLeft <= 0) endGame();
+  }, 1000);
+}
+
+function renderG2() {
+  if(gameState.qIdx >= gameState.questions.length) { endGame(); return; }
+  const q = gameState.questions[gameState.qIdx];
+  document.getElementById('g2-verb').textContent = q.verb;
+  document.getElementById('g2-context').textContent = q.context;
+  document.getElementById('g2-progress').style.width = (gameState.qIdx / gameState.questions.length * 100) + '%';
+  document.getElementById('g2-score').textContent = gameState.score;
+  // Render zones as clickable buttons
+  const zonesEl = document.getElementById('g2-zones');
+  zonesEl.innerHTML = '';
+  ZEITFORMEN_LIST.forEach(zf => {
+    const zone = document.createElement('div');
+    zone.className = 'zeit-zone';
+    zone.innerHTML = `<div class="zone-label" style="color:${FARBEN[zf]}">${zf}</div>`;
+    zone.style.borderColor = FARBEN[zf] + '44';
+    zone.onclick = () => checkG2(zf, q.answer, zone);
+    zonesEl.appendChild(zone);
+  });
+}
+
+function checkG2(chosen, correct, zoneEl) {
+  document.querySelectorAll('.zeit-zone').forEach(z => z.onclick = null);
+  if(chosen === correct) {
+    zoneEl.style.background = 'rgba(6,214,160,0.2)';
+    zoneEl.style.borderColor = '#06D6A0';
+    gameState.streak++;
+    gameState.correct++;
+    if(gameState.streak > gameState.bestStreak) gameState.bestStreak = gameState.streak;
+    const pts = 100 + gameState.streak * 15;
+    gameState.score += pts;
+    const xp = 40 + gameState.streak * 8;
+    gameState.xpEarned += xp;
+    addXP(xp);
+    showFeedback('✅', streakMsg(gameState.streak), `${chosen} ist richtig! +${pts} Punkte`, `+${xp} XP`);
+  } else {
+    zoneEl.style.background = 'rgba(255,107,107,0.2)';
+    zoneEl.style.borderColor = '#FF6B6B';
+    // Show correct
+    document.querySelectorAll('.zeit-zone').forEach(z => {
+      if(z.querySelector('.zone-label').textContent === correct) {
+        z.style.background = 'rgba(6,214,160,0.2)';
+        z.style.borderColor = '#06D6A0';
+      }
+    });
+    gameState.streak = 0;
+    gameState.wrong++;
+    showFeedback('❌', 'Falsch!', `Richtig wäre: ${correct}`, '');
+  }
+  document.getElementById('g2-score').textContent = gameState.score;
+  setTimeout(() => { gameState.qIdx++; renderG2(); }, 1600);
+}
+
+// ============================================================
+// GAME 3: QUIZ BLITZ
+// ============================================================
+function startGame3() {
+  gameState.questions = shuffle([...G3_QUESTIONS]);
+  gameState.timeLeft = 20;
+  gameState.qIdx = 0;
+  showScreen('game3');
+  renderG3();
+  startG3Timer();
+}
+
+function startG3Timer() {
+  clearGameTimers();
+  gameState.timeLeft = 20;
+  const t = document.getElementById('g3-timer');
+  t.textContent = gameState.timeLeft;
+  t.classList.remove('danger');
+  gameState.timer = setInterval(() => {
+    gameState.timeLeft--;
+    t.textContent = gameState.timeLeft;
+    t.classList.toggle('danger', gameState.timeLeft <= 7);
+    if(gameState.timeLeft <= 0) {
+      clearGameTimers();
+      gameState.streak = 0;
+      gameState.wrong++;
+      showFeedback('⏰', 'Zeit abgelaufen!', 'Zu langsam!', '');
+      setTimeout(() => { gameState.qIdx++; renderG3(); startG3Timer(); }, 1800);
+    }
+  }, 1000);
+}
+
+function renderG3() {
+  if(gameState.qIdx >= gameState.questions.length) { endGame(); return; }
+  const q = gameState.questions[gameState.qIdx];
+  document.getElementById('g3-question').textContent = q.q;
+  document.getElementById('g3-sub').textContent = q.sub;
+  document.getElementById('g3-progress').style.width = (gameState.qIdx / gameState.questions.length * 100) + '%';
+  document.getElementById('g3-score').textContent = gameState.score;
+  const s = gameState.streak;
+  document.getElementById('g3-streak').textContent = s > 1 ? `🔥 ${s}er Streak!` : '';
+  // Shuffle answers keeping track of correct
+  const pairs = q.answers.map((a,i) => ({text:a, isCorrect: i===q.correct}));
+  const shuffled = shuffle(pairs);
+  const grid = document.getElementById('g3-answers');
+  grid.innerHTML = '';
+  shuffled.forEach(pair => {
+    const btn = document.createElement('button');
+    btn.className = 'ans-btn';
+    btn.textContent = pair.text;
+    btn.onclick = () => checkG3(pair.isCorrect, btn);
+    grid.appendChild(btn);
+  });
+}
+
+function checkG3(isCorrect, btn) {
+  clearGameTimers();
+  document.querySelectorAll('.ans-btn').forEach(b => b.disabled = true);
+  if(isCorrect) {
+    btn.classList.add('correct');
+    gameState.streak++;
+    gameState.correct++;
+    if(gameState.streak > gameState.bestStreak) gameState.bestStreak = gameState.streak;
+    const timebonus = gameState.timeLeft * 5;
+    const pts = 100 + gameState.streak * 25 + timebonus;
+    gameState.score += pts;
+    const xp = 50 + gameState.streak * 12;
+    gameState.xpEarned += xp;
+    addXP(xp);
+    showFeedback('⚡', streakMsg(gameState.streak), `+${pts} Punkte (${timebonus} Zeitbonus)`, `+${xp} XP`);
+  } else {
+    btn.classList.add('wrong');
+    // Show correct
+    document.querySelectorAll('.ans-btn').forEach(b => {
+      if(!b.classList.contains('wrong') && b.textContent === gameState.questions[gameState.qIdx].answers[gameState.questions[gameState.qIdx].correct]) b.classList.add('correct');
+    });
+    gameState.streak = 0;
+    gameState.wrong++;
+    showFeedback('❌', 'Falsch!', 'Die grüne Antwort war richtig!', '');
+  }
+  document.getElementById('g3-score').textContent = gameState.score;
+  setTimeout(() => { gameState.qIdx++; renderG3(); startG3Timer(); }, 1800);
+}
+
+// ============================================================
+// GAME 4: GESCHICHTE
+// ============================================================
+function startGame4() {
+  gameState.story = G4_STORIES[Math.floor(Math.random() * G4_STORIES.length)];
+  gameState.timeLeft = 120;
+  gameState.selectedWord = null;
+  gameState.filled = {};
+  showScreen('game4');
+  renderG4();
+  gameState.timer = setInterval(() => {
+    gameState.timeLeft--;
+    const t = document.getElementById('g4-timer');
+    t.textContent = gameState.timeLeft;
+    t.classList.toggle('danger', gameState.timeLeft <= 15);
+    if(gameState.timeLeft <= 0) checkStory();
+  }, 1000);
+}
+
+function renderG4() {
+  const s = gameState.story;
+  // Build story HTML
+  let html = '';
+  s.sentences.forEach(sent => {
+    html += sent.text;
+    html += `<span class="story-blank" id="blank-${sent.blank}" data-blank="${sent.blank}" onclick="fillBlank('${sent.blank}')">_______</span>`;
+    html += sent.after;
+  });
+  document.getElementById('g4-story').innerHTML = html;
+  // Build word bank - all options shuffled
+  const allWords = [];
+  s.blanks.forEach(b => b.options.forEach(o => { if(!allWords.includes(o)) allWords.push(o); }));
+  const shuffled = shuffle(allWords);
+  const wb = document.getElementById('g4-wordbank');
+  wb.innerHTML = '';
+  shuffled.forEach(word => {
+    const chip = document.createElement('div');
+    chip.className = 'word-chip';
+    chip.textContent = word;
+    chip.id = 'chip-' + word.replace(/\s/g,'_');
+    chip.onclick = () => selectWord(word, chip);
+    wb.appendChild(chip);
+  });
+  document.getElementById('g4-progress').style.width = '0%';
+  document.getElementById('g4-score').textContent = gameState.score;
+}
+
+function selectWord(word, chipEl) {
+  document.querySelectorAll('.word-chip').forEach(c => c.classList.remove('selected'));
+  if(gameState.selectedWord === word) { gameState.selectedWord = null; return; }
+  gameState.selectedWord = word;
+  chipEl.classList.add('selected');
+}
+
+function fillBlank(blankId) {
+  if(!gameState.selectedWord) return;
+  const el = document.getElementById('blank-' + blankId);
+  const prev = gameState.filled[blankId];
+  if(prev) {
+    // Un-use previous
+    const prevChip = document.getElementById('chip-' + prev.replace(/\s/g,'_'));
+    if(prevChip) prevChip.classList.remove('used');
+  }
+  gameState.filled[blankId] = gameState.selectedWord;
+  el.textContent = gameState.selectedWord;
+  el.classList.add('filled'); el.classList.remove('wrong-ans');
+  // Mark chip as used
+  const chip = document.getElementById('chip-' + gameState.selectedWord.replace(/\s/g,'_'));
+  if(chip) { chip.classList.add('used'); chip.classList.remove('selected'); }
+  gameState.selectedWord = null;
+  // Update progress
+  const filled = Object.keys(gameState.filled).length;
+  const total = gameState.story.blanks.length;
+  document.getElementById('g4-progress').style.width = (filled/total*100) + '%';
+}
+
+function checkStory() {
+  clearGameTimers();
+  const s = gameState.story;
+  let correct = 0;
+  s.blanks.forEach(b => {
+    const el = document.getElementById('blank-' + b.id);
+    if(!el) return;
+    if(gameState.filled[b.id] === b.correct) {
+      el.classList.add('filled'); el.classList.remove('wrong-ans');
+      correct++;
+      gameState.correct++;
+    } else {
+      el.classList.add('wrong-ans'); el.classList.remove('filled');
+      el.textContent = b.correct;
+      gameState.wrong++;
+    }
+  });
+  const pts = correct * 150 + (gameState.timeLeft > 0 ? gameState.timeLeft * 3 : 0);
+  gameState.score += pts;
+  const xp = correct * 60;
+  gameState.xpEarned += xp;
+  addXP(xp);
+  showFeedback(correct === s.blanks.length ? '🏆' : '📝', `${correct} von ${s.blanks.length} richtig!`, `+${pts} Punkte`, `+${xp} XP`, 2000);
+  setTimeout(() => endGame(), 3000);
+}
+
+// ============================================================
+// GAME 5: SPEED CHALLENGE
+// ============================================================
+function startGame5() {
+  gameState.questions = shuffle([...G5_QUESTIONS]);
+  gameState.timeLeft = 90;
+  gameState.qIdx = 0;
+  gameState.lives = 3;
+  showScreen('game5');
+  renderG5Lives();
+  renderG5();
+  const inp = document.getElementById('g5-input');
+  inp.onkeydown = (e) => { if(e.key === 'Enter') { e.preventDefault(); checkG5(); } };
+  document.getElementById('g5-submit-btn').onclick = () => checkG5();
+  gameState.timer = setInterval(() => {
+    gameState.timeLeft--;
+    const t = document.getElementById('g5-timer');
+    t.textContent = gameState.timeLeft;
+    t.classList.toggle('danger', gameState.timeLeft <= 15);
+    if(gameState.timeLeft <= 0) endGame();
+  }, 1000);
+  setTimeout(() => inp.focus(), 400);
+}
+
+function renderG5Lives() {
+  const row = document.getElementById('g5-lives');
+  row.innerHTML = '';
+  for(let i = 0; i < 3; i++) {
+    const l = document.createElement('div');
+    l.className = 'life' + (i >= gameState.lives ? ' lost' : '');
+    l.textContent = '❤️';
+    row.appendChild(l);
+  }
+}
+
+function renderG5() {
+  if(gameState.qIdx >= gameState.questions.length || gameState.lives <= 0) { endGame(); return; }
+  const q = gameState.questions[gameState.qIdx];
+  document.getElementById('g5-prompt').textContent = q.prompt;
+  document.getElementById('g5-sentence').textContent = q.sentence;
+  document.getElementById('g5-instruction').textContent = q.instruction;
+  document.getElementById('g5-input').value = '';
+  document.getElementById('g5-progress').style.width = (gameState.qIdx / gameState.questions.length * 100) + '%';
+  document.getElementById('g5-score').textContent = gameState.score;
+  updateCombo('g5-combo', gameState.streak);
+}
+
+function checkG5() {
+  const inp = document.getElementById('g5-input');
+  const val = inp.value.trim().toLowerCase();
+  const q = gameState.questions[gameState.qIdx];
+  const correct = q.answer.toLowerCase().trim();
+  // Flexible matching: normalize spaces and punctuation
+  const normalize = s => s.replace(/[.,!?]/g,'').replace(/\s+/g,' ').trim();
+  if(normalize(val) === normalize(correct)) {
+    inp.classList.add('correct-flash');
+    gameState.streak++;
+    gameState.correct++;
+    if(gameState.streak > gameState.bestStreak) gameState.bestStreak = gameState.streak;
+    const pts = 150 + gameState.streak * 30;
+    gameState.score += pts;
+    const xp = 70 + gameState.streak * 15;
+    gameState.xpEarned += xp;
+    addXP(xp, inp.getBoundingClientRect().left, inp.getBoundingClientRect().top);
+    showFeedback('🚀', streakMsg(gameState.streak), `+${pts} Punkte!`, `+${xp} XP`);
+    setTimeout(() => { inp.classList.remove('correct-flash'); gameState.qIdx++; renderG5(); inp.focus(); }, 1400);
+  } else {
+    inp.classList.add('wrong-flash');
+    gameState.streak = 0;
+    gameState.lives--;
+    gameState.wrong++;
+    renderG5Lives();
+    showFeedback('❌', 'Falsch!', `Richtig: ${q.answer}`, '');
+    setTimeout(() => {
+      inp.classList.remove('wrong-flash');
+      if(gameState.lives <= 0) { endGame(); return; }
+      gameState.qIdx++;
+      renderG5();
+      inp.focus();
+    }, 1800);
+  }
+  document.getElementById('g5-score').textContent = gameState.score;
+  updateCombo('g5-combo', gameState.streak);
+}
+
+// ============================================================
+// LEADERBOARD
+// ============================================================
+function renderLeaderboard() {
+  const table = document.getElementById('lb-table');
+  if(leaderboard.length === 0) {
+    table.innerHTML = '<div style="text-align:center;color:#AAA8FF;padding:40px">Noch keine Einträge. Spiele zuerst ein Spiel!</div>';
+    return;
+  }
+  const rankEmoji = ['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟'];
+  const gameNames = {game1:'✏️ Lückentext',game2:'🗂️ Sortierer',game3:'⚡ Quiz-Blitz',game4:'📖 Geschichte',game5:'🏎️ Speed'};
+  table.innerHTML = leaderboard.map((e,i) => `
+    <div class="lb-row" style="animation-delay:${i*0.08}s">
+      <div class="lb-rank">${rankEmoji[i] || (i+1)}</div>
+      <div>
+        <div class="lb-name">${e.name}</div>
+        <div class="lb-game">${gameNames[e.game] || e.game} · 🔥 ${e.streak}</div>
+      </div>
+      <div class="lb-pts">${e.score}</div>
+    </div>`).join('');
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function shuffle(arr) {
+  for(let i = arr.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function streakMsg(streak) {
+  if(streak >= 10) return '🔥 LEGENDARY!';
+  if(streak >= 7) return '⚡ UNSTOPPABLE!';
+  if(streak >= 5) return '🚀 MEGA-COMBO!';
+  if(streak >= 3) return '🎯 COMBO! x' + streak;
+  return '✅ Richtig!';
+}
+
+function updateCombo(id, streak) {
+  const el = document.getElementById(id);
+  if(!el) return;
+  if(streak >= 3) {
+    el.textContent = `🔥 ${streak}er Combo! Bonus x${Math.min(5, Math.floor(streak/2)+1)}`;
+    el.classList.add('hot');
+  } else {
+    el.textContent = '';
+    el.classList.remove('hot');
+  }
+}
+
+// ============================================================
+// ENTER KEY on name field
+// ============================================================
+document.getElementById('player-name').addEventListener('keydown', e => {
+  if(e.key === 'Enter') { e.preventDefault(); startGame(); }
+});
+
+// INIT
+initStars();
+</script>
+</body>
+</html>
